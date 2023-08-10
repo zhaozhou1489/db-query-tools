@@ -1,10 +1,12 @@
 package com.marmot.db.query.tools.tools;
 
 import cn.hutool.json.JSONUtil;
+import com.marmot.db.query.tools.enums.QueryOperatorEnum;
 import com.marmot.db.query.tools.query.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -13,7 +15,7 @@ import java.util.List;
  * @Desc:
  */
 public class QueryValidator {
-    public static <T extends BaseQuery>  String validQuery(T query){
+    public static <T extends AbstractBaseQuery>  String validQuery(T query){
         if (query instanceof EqualQuery){
             EqualQuery q = (EqualQuery) query;
             if (StringUtils.isBlank(q.getField()) || StringUtils.isBlank(q.getValue())){
@@ -40,14 +42,30 @@ public class QueryValidator {
             if (StringUtils.isBlank(q.getField()) || CollectionUtils.isEmpty(q.getValues())){
                 return "LikeQuery, [field] and [valueSet] are required";
             }
-        }else {
+        }else if (query instanceof NullQuery){
+            NullQuery q = (NullQuery) query;
+            if (StringUtils.isBlank(q.getField())){
+                return "NullQuery, [field] is required";
+            }
+        }else if (query instanceof BooleanQuery){
+            BooleanQuery q = (BooleanQuery) query;
+            List<String> operators = Arrays.asList(QueryOperatorEnum.OR.getOperator(), QueryOperatorEnum.AND.getOperator());
+            if (StringUtils.isBlank(q.getOperator()) || !operators.contains(q.getOperator().toLowerCase())){
+                return "BooleanQuery, [operator] is invalid";
+            }
+            if (CollectionUtils.isEmpty(q.getQueries())){
+                return "BooleanQuery, [queries] is empty";
+            }
+            String errMsg = validQueries(q.getBaseQueries());
+            return errMsg;
+        } else {
             return "Unknown query, str=" + JSONUtil.toJsonStr(query);
         }
 
         return null;
     }
 
-    public static <T extends BaseQuery>  String validQueries(List<T> queries){
+    public static <T extends AbstractBaseQuery>  String validQueries(List<T> queries){
         for (T query: queries){
             String errMsg = validQuery(query);
             if (StringUtils.isNotBlank(errMsg)){

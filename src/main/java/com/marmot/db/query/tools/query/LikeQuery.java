@@ -1,5 +1,6 @@
 package com.marmot.db.query.tools.query;
 
+import com.marmot.db.query.tools.enums.QueryTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -11,10 +12,9 @@ import lombok.NoArgsConstructor;
  * @Desc:
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper=false)
-public class LikeQuery extends BaseQuery {
+public class LikeQuery extends AbstractOppositionQuery {
     private String likeValue;
 
     //true：左模糊匹配
@@ -22,4 +22,13 @@ public class LikeQuery extends BaseQuery {
 
     //true:右模糊匹配
     private boolean right;
+
+    public LikeQuery(String field, String likeValue, boolean left, boolean right, boolean opposition) {
+        this.setType(QueryTypeEnum.LIKE.getName());
+        this.setField(field);
+        this.setLikeValue(likeValue);
+        this.setLeft(left);
+        this.setRight(right);
+        this.setOpposition(opposition);
+    }
 }

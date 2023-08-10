@@ -14,14 +14,11 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper=false)
-public class EqualQuery extends AbstractOppositionQuery {
-    private String value;
+public class NullQuery extends AbstractOppositionQuery {
 
-
-    public EqualQuery(String field, String value, boolean opposition) {
-        this.setType(QueryTypeEnum.EQUAL.getName());
+    public NullQuery(String field, boolean opposition) {
+        this.setType(QueryTypeEnum.NULL.getName());
         this.setField(field);
-        this.setValue(value);
         this.setOpposition(opposition);
     }
 }

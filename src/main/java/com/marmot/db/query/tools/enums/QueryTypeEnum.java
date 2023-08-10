@@ -8,8 +8,10 @@ import java.util.Arrays;
 public enum QueryTypeEnum {
     EQUAL("equal"),
     RANGE("range"),
-    SET("in"),
+    IN("in"),
     LIKE("like"),
+    NULL("null"),
+    BOOLEAN("boolean"),
     ;
 
     private String name;

@@ -1,6 +1,6 @@
 package com.marmot.db.query.tools.params;
 
-import com.marmot.db.query.tools.query.BaseQuery;
+import com.marmot.db.query.tools.query.AbstractBaseQuery;
 import com.marmot.db.query.tools.query.Limit;
 import com.marmot.db.query.tools.query.Order;
 import lombok.AllArgsConstructor;
@@ -18,7 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class QueryCond {
-    private List<? extends BaseQuery> queries;
+    private List<? extends AbstractBaseQuery> queries;
     private Limit limit;
     private List<Order> orders;
 }

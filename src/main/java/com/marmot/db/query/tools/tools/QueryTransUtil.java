@@ -4,9 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.marmot.db.query.tools.enums.QueryOrderEnum;
 import com.marmot.db.query.tools.params.QueryCond;
 import com.marmot.db.query.tools.params.QueryParam;
-import com.marmot.db.query.tools.query.BaseQuery;
-import com.marmot.db.query.tools.query.Limit;
-import com.marmot.db.query.tools.query.Order;
+import com.marmot.db.query.tools.query.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -34,7 +32,7 @@ public class QueryTransUtil {
      **/
     public static String transQueryParam(QueryParam queryParam, QueryCond queryCond, Set<String> validFields) {
         String errMsg = "";
-        List<BaseQuery> queries = new LinkedList<>();
+        List<AbstractBaseQuery> queries = new LinkedList<>();
 
         queryCond.setQueries(new LinkedList<>());
         if (queryParam == null){
@@ -65,24 +63,44 @@ public class QueryTransUtil {
     }
 
 
-    public static void initDefaultLimit(QueryCond queryCond){
-        if (queryCond != null && queryCond.getLimit() == null){
-            queryCond.setLimit(new Limit(0L,LIMIT_COUNT_MAX));
-        }
-    }
 
-
+    /**
+     * @Desc 检测查询参数是否合法
+     **/
     private static String validFieldOfQueryCond(QueryCond queryCond, Set<String> validFields){
         if (CollectionUtils.isEmpty(validFields)){
             return "";
         }
         //查询字段检查
         Set<String> queryInvalidFields = CollectionUtils.isEmpty(queryCond.getQueries()) ? new HashSet<>() :
-                queryCond.getQueries().stream().map(BaseQuery::getField).filter(field -> !validFields.contains(field)).collect(Collectors.toSet());
+                validQueryField(queryCond.getQueries(), validFields);
         //排序字段检查
         Set<String> orderInvalidFields = CollectionUtils.isEmpty(queryCond.getOrders()) ? new HashSet<>():
                 queryCond.getOrders().stream().map(Order::getField).filter(field -> !validFields.contains(field)).collect(Collectors.toSet());
+
         Set<String> invalidFields = Stream.of(queryInvalidFields,orderInvalidFields).flatMap(Set::stream).collect(Collectors.toSet());
         return CollectionUtils.isEmpty(invalidFields) ? "": "fields " + JSONUtil.toJsonStr(invalidFields) + " are not support";
+    }
+
+
+    /**
+     * @Desc 检测查询字段是否合法
+     **/
+    private static Set<String> validQueryField(List<? extends AbstractBaseQuery> queries, Set<String> validFields){
+        Set<String> invalidFields = new HashSet<>();
+        for (AbstractBaseQuery query:queries){
+            if (query instanceof AbstractFieldQuery){
+                if (!validFields.contains(((AbstractFieldQuery) query).getField())){
+                    invalidFields.add(((AbstractFieldQuery) query).getField());
+                }
+            }
+            if (query instanceof BooleanQuery){
+                Set<String> boolInvalidFields = validQueryField(((BooleanQuery) query).getBaseQueries(), validFields);
+                if (CollectionUtils.isNotEmpty(boolInvalidFields)){
+                    invalidFields.addAll(boolInvalidFields);
+                }
+            }
+        }
+        return invalidFields;
     }
 }

@@ -4,10 +4,12 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.marmot.db.query.tools.enums.QueryTypeEnum;
 import com.marmot.db.query.tools.query.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -16,31 +18,45 @@ import java.util.Map;
  * @Date: 2023/07/18
  * @Desc:
  */
+@Slf4j
 public class QueryParser {
-    private static final Map<String,Class<? extends BaseQuery>> queryNameClassMap = new HashMap<String,Class<? extends BaseQuery>>(){{
+    private static final Map<String,Class<? extends AbstractBaseQuery>> queryNameClassMap = new HashMap<String,Class<? extends AbstractBaseQuery>>(){{
         put(QueryTypeEnum.EQUAL.getName(), EqualQuery.class);
         put(QueryTypeEnum.LIKE.getName(), LikeQuery.class);
         put(QueryTypeEnum.RANGE.getName(), RangeQuery.class);
-        put(QueryTypeEnum.SET.getName(), InQuery.class);
+        put(QueryTypeEnum.IN.getName(), InQuery.class);
+        put(QueryTypeEnum.NULL.getName(), NullQuery.class);
+        put(QueryTypeEnum.BOOLEAN.getName(), BooleanQuery.class);
     }};
 
 
-    public static BaseQuery parseQuery(String queryStr, Class<? extends BaseQuery> queryClass){
+    public static AbstractBaseQuery parseQuery(String queryStr, Class<? extends AbstractBaseQuery> queryClass){
         if (StringUtils.isBlank(queryStr)) return null;
         return JSONUtil.toBean(queryStr, queryClass);
     }
 
 
-    public static String parseQueries(List<String> queryStrs, List<BaseQuery> queries) {
+    public static String parseQueries(List<String> queryStrs, List<AbstractBaseQuery> queries) {
         if (CollectionUtils.isEmpty(queryStrs)) return "";
         for (String q : queryStrs) {
             JSONObject jsonObj = JSONUtil.parseObj(q);
-            String queryType = jsonObj.getStr("queryType");
-            Class<? extends BaseQuery> queryClass = queryNameClassMap.get(queryType);
+            String queryType = jsonObj.getStr("type");
+            Class<? extends AbstractBaseQuery> queryClass = queryNameClassMap.get(queryType);
             if (queryClass == null) {
-                return "queryType=" + queryType + " is invalid";
+                return "type=" + queryType + " is not support";
             }
-            queries.add(parseQuery(q, queryClass));
+            AbstractBaseQuery query = parseQuery(q, queryClass);
+            queries.add(query);
+            //若是Boolean查询，则解析子查询
+            if (query instanceof BooleanQuery){
+                List<AbstractBaseQuery> boolSubQueries = new LinkedList<>();
+                String errMsg = parseQueries(((BooleanQuery) query).getQueries(),boolSubQueries);
+                if (StringUtils.isNotBlank(errMsg)){
+                    log.error("parse boolean sub query error, subQuery={}, errMsg={}", ((BooleanQuery) query).getQueries(), errMsg);
+                    return errMsg;
+                }
+                ((BooleanQuery) query).setBaseQueries(boolSubQueries);
+            }
         }
         return "";
     }
