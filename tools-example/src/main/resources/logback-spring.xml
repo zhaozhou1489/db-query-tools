@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+    <property name="PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [trace-id:%X{trace-id}] [%level] %logger{36}-%L %msg%n"/>
+    <property name="PATTERN_TID"
+              value="%date{yyyy-MM-dd HH:mm:ss.SSS} | %highlight(%-5level) | TID-%TID | %boldGreen(%thread) | %logger | trace-id:%X{trace-id}| %msg%n"/>
+    <property name="LOG_FILE_PATH" value="/data/logs/test"/>
+
+        <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>${PATTERN}</pattern>
+            </encoder>
+        </appender>
+        <appender name="TEST_ALL_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_FILE_PATH}/test.log</file>
+            <encoder>
+                <pattern>${PATTERN}</pattern>
+            </encoder>
+            <filter class="ch.qos.logback.classic.filter.LevelFilter">
+                <level>DEBUG</level>
+                <onMatch>ACCEPT</onMatch>
+                <onMismatch>ACCEPT</onMismatch>
+            </filter>
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_FILE_PATH}/archived/test.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+                <maxHistory>100</maxHistory>
+                <timeBasedFileNamingAndTriggeringPolicy
+                        class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                    <maxFileSize>128MB</maxFileSize>
+                </timeBasedFileNamingAndTriggeringPolicy>
+            </rollingPolicy>
+        </appender>
+
+        <appender name="TEST_WARN_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_FILE_PATH}/test_warn.log</file>
+            <encoder>
+                <pattern>${PATTERN}</pattern>
+            </encoder>
+            <filter class="ch.qos.logback.classic.filter.LevelFilter">
+                <level>WARN</level>
+                <onMatch>ACCEPT</onMatch>
+                <onMismatch>DENY</onMismatch>
+            </filter>
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_FILE_PATH}/archived/test_warn.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+                <maxHistory>100</maxHistory>
+                <timeBasedFileNamingAndTriggeringPolicy
+                        class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                    <maxFileSize>128MB</maxFileSize>
+                </timeBasedFileNamingAndTriggeringPolicy>
+            </rollingPolicy>
+        </appender>
+
+
+        <root level="debug">
+            <appender-ref ref="stdout"/>
+            <appender-ref ref="TEST_ALL_LOG"/>
+            <appender-ref ref="TEST_WARN_LOG"/>
+        </root>
+</configuration>

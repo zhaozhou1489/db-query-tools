@@ -37,7 +37,7 @@ public class UserController {
     @RequestMapping("/find")
     public ResponseResult findUser(@RequestBody QueryParam qp){
         QueryCond cond = new QueryCond();
-        String msg = QueryTransUtil.transQueryParam(qp,cond,new HashSet<>(Arrays.asList("id","name","code","birthday","gender","country","create_time","update_time")));
+        String msg = QueryTransUtil.transQueryParam(qp,cond,new HashSet<>(Arrays.asList("id","name","code","birthday","gender","country","createTime","updateTime")));
         if (StringUtils.isNotBlank(msg)){
             return new ResponseResult<>(-1,msg,null);
         }

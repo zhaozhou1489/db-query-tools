@@ -205,14 +205,12 @@ public class QueryBuilder {
 
     public static void main(String[] args){
         QueryParam queryParam = QueryBuilder.newBuilder()
-                .addEqualQuery("test","121212")
-                .addLikeQuery("name","tom", true, true,false)
-                .addRangeQuery("createTime","1000","10000",true,false)
-                .addInQuery("id", Arrays.asList("12","1212"))
+                .addLikeQuery("name","111", true, true,false)
+                .addRangeQuery("code","1","100",true,false)
+                .addInQuery("id", Arrays.asList("111","222","333"))
                 .setLimit(0,100)
-                .addOrder("test",QueryOrderEnum.ASC)
+                .addOrder("id",QueryOrderEnum.ASC)
                 .addOrder("name",QueryOrderEnum.DESC)
-                .addBooleanQuery(QueryBuilder.newBuilder().addEqualQuery("test","121212").addInQuery("name",Arrays.asList("1212","12131")),QueryOperatorEnum.OR)
                 .getQueryParam();
         System.out.println(JSONUtil.toJsonStr(queryParam));
     }
