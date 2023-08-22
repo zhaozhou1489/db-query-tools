@@ -1,5 +1,6 @@
 package com.marmot.db.query.tools.params;
 
+import com.marmot.db.query.tools.query.AbstractBaseQuery;
 import com.marmot.db.query.tools.query.Limit;
 import com.marmot.db.query.tools.query.Order;
 import lombok.AllArgsConstructor;
@@ -17,7 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class QueryParam {
-    //查询方式，如equal，like等
+    //查询子句，如equal，like等
     private List<String> queries;
 
     //limit

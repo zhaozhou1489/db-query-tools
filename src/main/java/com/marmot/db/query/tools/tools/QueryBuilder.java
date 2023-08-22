@@ -5,7 +5,6 @@ import com.marmot.db.query.tools.enums.QueryOperatorEnum;
 import com.marmot.db.query.tools.enums.QueryOrderEnum;
 import com.marmot.db.query.tools.params.QueryParam;
 import com.marmot.db.query.tools.query.*;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -28,7 +27,7 @@ public class QueryBuilder {
     public static QueryBuilder newBuilder(){
         QueryBuilder qb = new QueryBuilder();
         qb.queryParam = new QueryParam();
-        qb.queryParam.setQueries(new LinkedList<>());
+        qb.getQueryParam().setQueries(new LinkedList<>());
 
         return qb;
     }
@@ -38,8 +37,8 @@ public class QueryBuilder {
      * @Desc 添加Equal查询
      **/
     public QueryBuilder addEqualQuery(String field, String value){
-        Assert.hasLength(field,"field is blank");
-        Assert.hasLength(field,"value is blank");
+        Assert.hasText(field,"field is blank");
+        Assert.hasText(field,"value is blank");
         EqualQuery query = new EqualQuery(field,value,false);
         this.addQuery(query);
         return this;
@@ -49,8 +48,8 @@ public class QueryBuilder {
      * @Desc 添加NotEqual查询
      **/
     public QueryBuilder addNotEqualQuery(String field, String value){
-        Assert.hasLength(field,"field is blank");
-        Assert.hasLength(field,"value is blank");
+        Assert.hasText(field,"field is blank");
+        Assert.hasText(field,"value is blank");
         EqualQuery query = new EqualQuery(field,value,true);
         this.addQuery(query);
         return this;
@@ -60,8 +59,8 @@ public class QueryBuilder {
      * @Desc 添加Range查询
      **/
     public QueryBuilder addRangeQuery(String field, String max,String min,boolean includeMax, boolean includeMin){
-        Assert.hasLength(field,"field is blank");
-        Assert.isTrue(StringUtils.hasLength(max) || StringUtils.hasLength(min), "max or min, at least one exist");
+        Assert.hasText(field,"field is blank");
+        Assert.isTrue(StringUtils.hasText(max) || StringUtils.hasText(min), "max or min, at least one exist");
         RangeQuery query = new RangeQuery(field, max, min,includeMax,includeMin);
         this.addQuery(query);
         return this;
@@ -72,8 +71,8 @@ public class QueryBuilder {
      * @Desc 添加In查询
      **/
     public QueryBuilder addInQuery(String field, List<String> values){
-        Assert.hasLength(field,"field is blank");
-        Assert.notEmpty(values, "valueSet should not blank");
+        Assert.hasText(field,"field is blank");
+        Assert.notEmpty(values, "valueSet should not empty");
         InQuery query = new InQuery(field,values,false);
         this.addQuery(query);
         return this;
@@ -83,16 +82,16 @@ public class QueryBuilder {
      * @Desc 添加NotIn查询
      **/
     public QueryBuilder addNotInQuery(String field, List<String> values){
-        Assert.hasLength(field,"field is blank");
-        Assert.notEmpty(values, "valueSet should not blank");
+        Assert.hasText(field,"field is blank");
+        Assert.notEmpty(values, "valueSet should not empty");
         InQuery query = new InQuery(field,values,true);
         this.addQuery(query);
         return this;
     }
 
     private QueryBuilder addLikeQuery(String field, String likeValue, boolean left, boolean right,boolean opposition){
-        Assert.hasLength(field,"field is blank");
-        Assert.hasLength(likeValue, "likeValue should not blank");
+        Assert.hasText(field,"field is blank");
+        Assert.hasText(likeValue, "likeValue should not blank");
         LikeQuery query = new LikeQuery(field,likeValue, left,right,opposition);
         this.addQuery(query);
         return this;
@@ -149,7 +148,7 @@ public class QueryBuilder {
      * @Desc 添加isNull查询
      **/
     public QueryBuilder addNullQuery(String field){
-        Assert.hasLength(field,"field is blank");
+        Assert.hasText(field,"field is blank");
         NullQuery query = new NullQuery(field,false);
         this.addQuery(query);
         return this;
@@ -159,7 +158,7 @@ public class QueryBuilder {
      * @Desc 添加isNotNull查询
      **/
     public QueryBuilder addNotNullQuery(String field){
-        Assert.hasLength(field,"field is blank");
+        Assert.hasText(field,"field is blank");
         NullQuery query = new NullQuery(field,true);
         this.addQuery(query);
         return this;
@@ -169,10 +168,11 @@ public class QueryBuilder {
      * @Desc 添加Boolean查询
      **/
     public QueryBuilder addBooleanQuery(QueryBuilder qb, QueryOperatorEnum operator){
-        Assert.notNull(operator == null,"operator is empty");
-        if (qb != null && qb.getQueryParam() != null && CollectionUtils.isNotEmpty(qb.getQueryParam().getQueries())){
-            this.queryParam.getQueries().add(JSONUtil.toJsonStr(new BooleanQuery(qb.getQueryParam().getQueries(),operator.getOperator())));
-        }
+        Assert.notNull(operator,"operator is empty");
+        Assert.notNull(qb,"qb is empty");
+        Assert.notNull(qb.getQueryParam(),"qb.queryParam is empty");
+        Assert.notEmpty(qb.getQueryParam().getQueries(),"qb.queryParam.queries is empty");
+        this.addQuery(new BooleanQuery(qb.getQueryParam().getQueries(),operator.getOperator()));
         return this;
     }
 
@@ -189,7 +189,7 @@ public class QueryBuilder {
      * @Desc 添加排序规则
      **/
     public QueryBuilder addOrder(String field, QueryOrderEnum orderEnum){
-        Assert.hasLength(field,"field is blank");
+        Assert.hasText(field,"field is blank");
         Assert.notNull(orderEnum,"orderEnum is null");
         if (queryParam.getOrders()==null) queryParam.setOrders(new LinkedList<>());
         queryParam.getOrders().add(new Order(field, orderNum++, orderEnum.getOrderStr()));

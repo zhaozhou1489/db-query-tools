@@ -19,14 +19,14 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper=false)
 public class BooleanQuery extends AbstractBaseQuery {
-    private List<String> queries;
-    private List<AbstractBaseQuery> baseQueries;
+    private List<String> subQueries;
+    private List<? extends AbstractBaseQuery> queries;
     private String operator;
 
     public BooleanQuery(List<String> queries, String operator) {
         super(QueryTypeEnum.BOOLEAN.getName());
-        this.queries = queries;
         this.operator = operator;
+        this.subQueries = queries;
     }
 
 }

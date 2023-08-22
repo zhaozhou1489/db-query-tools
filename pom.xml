@@ -13,6 +13,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <name>db-query-tools</name>
     <description>db-query-tools</description>
+
     <properties>
         <java.version>11</java.version>
     </properties>
@@ -111,17 +112,12 @@
             <artifactId>spring-core</artifactId>
             <version>5.3.9</version>
         </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>2.0.22</version>
+        </dependency>
 
 
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
-
 </project>

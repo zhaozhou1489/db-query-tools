@@ -1,25 +1,27 @@
 package com.marmot.db.query.tools.tools;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.marmot.db.query.tools.enums.QueryOperatorEnum;
 import com.marmot.db.query.tools.enums.QueryOrderEnum;
 import com.marmot.db.query.tools.params.QueryCond;
 import com.marmot.db.query.tools.params.QueryParam;
 import com.marmot.db.query.tools.query.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * @Author:zhaozhou
  * @Date: 2023/08/01
- * @Desc: todo
+ * @Desc: 查询参数解析及转换，将QueryParam转换为QueryCond
  */
+
+@Slf4j
 public class QueryTransUtil {
 
 
@@ -34,6 +36,7 @@ public class QueryTransUtil {
         String errMsg = "";
         List<AbstractBaseQuery> queries = new LinkedList<>();
 
+        log.info("start parse, input:{}", JSONUtil.toJsonStr(queryParam));
         queryCond.setQueries(new LinkedList<>());
         if (queryParam == null){
             return "";
@@ -41,10 +44,12 @@ public class QueryTransUtil {
         //解析及校验查询参数
         errMsg = StringUtils.isNotBlank(errMsg = QueryParser.parseQueries(queryParam.getQueries(), queries)) ? errMsg : QueryValidator.validQueries(queries);
         if (StringUtils.isNotBlank(errMsg)) {
+            log.error("parse and verify queries fail, errMsg={}", errMsg);
             return errMsg;
         }
 
         if (queryParam.getLimit() != null && queryParam.getLimit().getCount() > LIMIT_COUNT_MAX) {
+            log.error("limit count should less than " + LIMIT_COUNT_MAX);
             return "limit count should less than " + LIMIT_COUNT_MAX;
         }
         if (queryParam.getLimit() == null){
@@ -59,7 +64,14 @@ public class QueryTransUtil {
         queryCond.setOrders(queryParam.getOrders());
 
         //校验字段是否支持
-        return validFieldOfQueryCond(queryCond, validFields);
+        errMsg = validFieldOfQueryCond(queryCond, validFields);
+        if (StringUtils.isNotBlank(errMsg)){
+            log.error("verify field fail, msg={}", errMsg);
+            return errMsg;
+        }
+
+        log.info("parse query success, output:" + JSONUtil.toJsonStr(queryCond));
+        return errMsg;
     }
 
 
@@ -95,12 +107,33 @@ public class QueryTransUtil {
                 }
             }
             if (query instanceof BooleanQuery){
-                Set<String> boolInvalidFields = validQueryField(((BooleanQuery) query).getBaseQueries(), validFields);
+                Set<String> boolInvalidFields = validQueryField(((BooleanQuery) query).getQueries(), validFields);
                 if (CollectionUtils.isNotEmpty(boolInvalidFields)){
                     invalidFields.addAll(boolInvalidFields);
                 }
             }
         }
         return invalidFields;
+    }
+
+    public static void main(String[] args){
+        QueryParam queryParam = QueryBuilder.newBuilder()
+                .addEqualQuery("test","121212")
+                .addLikeQuery("name","tom")
+                .addRangeQuery("createTime","1000","10000",true,false)
+                .addInQuery("id", Arrays.asList("12","1212"))
+                .setLimit(0,100)
+                .addOrder("test", QueryOrderEnum.ASC)
+                .addOrder("name",QueryOrderEnum.DESC)
+                .addBooleanQuery(QueryBuilder.newBuilder().addEqualQuery("test","121212").addInQuery("name",Arrays.asList("1212","12131")), QueryOperatorEnum.OR)
+                .getQueryParam();
+        System.out.println(JSONUtil.toJsonStr(queryParam));
+
+        String queryStr = JSONUtil.toJsonStr(queryParam);
+        QueryParam qp = JSON.parseObject(queryStr,QueryParam.class);
+        QueryCond cond = new QueryCond();
+        transQueryParam(qp,cond,new HashSet<>(Arrays.asList("test","name","createTime")));
+        System.out.println(JSON.toJSON(cond));
+
     }
 }

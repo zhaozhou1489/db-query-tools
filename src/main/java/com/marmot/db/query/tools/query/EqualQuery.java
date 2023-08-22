@@ -1,7 +1,6 @@
 package com.marmot.db.query.tools.query;
 
 import com.marmot.db.query.tools.enums.QueryTypeEnum;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

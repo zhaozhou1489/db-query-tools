@@ -22,10 +22,11 @@ import java.util.stream.Stream;
 /**
  * @Author:zhaozhou
  * @Date: 2023/07/18
- * @Desc:
+ * @Desc: 将QueryCond查询参数，转换为QueryWrapper
  */
 public class QueryWrapperUtil {
 
+    //构建查询
     public static QueryWrapper transQueryCond(QueryWrapper wrapper, QueryCond cond){
         transQueries(wrapper,cond.getQueries());
         setLimit(wrapper,cond.getLimit());
@@ -33,34 +34,37 @@ public class QueryWrapperUtil {
         return wrapper;
     }
 
-    public static <T extends AbstractBaseQuery> QueryWrapper transWithBooleanQuery(QueryWrapper wrapper, List<T> queries, String parentOperator){
-        queries.stream().forEach(q -> {
+    private static <T extends AbstractBaseQuery> QueryWrapper transWithBooleanQuery(QueryWrapper wrapper, List<T> queries, String parentOperator){
+        for (int i = 0;i < queries.size(); i++){
+            AbstractBaseQuery q = queries.get(i);
             if (q instanceof BooleanQuery){
                 if (parentOperator.equals(QueryOperatorEnum.OR.getOperator())){
-                    wrapper.or((wq) -> transWithBooleanQuery(wq, ((BooleanQuery) q).getBaseQueries(), ((BooleanQuery) q).getOperator()));
+                    wrapper.or(wq -> transWithBooleanQuery((QueryWrapper)wq, ((BooleanQuery) q).getQueries(), ((BooleanQuery) q).getOperator()));
                 }else {
-                    wrapper.and((wq) -> transWithBooleanQuery(wq, ((BooleanQuery) q).getBaseQueries(), ((BooleanQuery) q).getOperator()));
+                    wrapper.and(wq -> transWithBooleanQuery((QueryWrapper)wq, ((BooleanQuery) q).getQueries(), ((BooleanQuery) q).getOperator()));
                 }
             }
             if (q instanceof AbstractFieldQuery){
                 ((AbstractFieldQuery) q).setField(StrUtil.toUnderlineCase(((AbstractFieldQuery) q).getField()));
-                if (parentOperator.equals(QueryOperatorEnum.OR.getOperator())){
-                    wrapper.or();
+                if (i != 0){
+                    if (parentOperator.equals(QueryOperatorEnum.OR.getOperator())){
+                        wrapper.or();
+                    }
                 }
                 transQuery(wrapper, q);
             }
-        });
+        }
         return wrapper;
     }
 
 
-    public static <T extends AbstractBaseQuery> QueryWrapper transQueries(QueryWrapper wrapper, List<T> queries){
+    private static <T extends AbstractBaseQuery> QueryWrapper transQueries(QueryWrapper wrapper, List<T> queries){
         return transWithBooleanQuery(wrapper, queries, QueryOperatorEnum.AND.getOperator());
     }
 
 
 
-    public static <T extends AbstractBaseQuery> AbstractWrapper transQuery(AbstractWrapper wrapper, T query){
+    private static <T extends AbstractBaseQuery> AbstractWrapper transQuery(AbstractWrapper wrapper, T query){
         if (query instanceof EqualQuery){
             EqualQuery q = (EqualQuery) query;
             transEqualQuery(wrapper, q);
@@ -75,30 +79,48 @@ public class QueryWrapperUtil {
         }else if (query instanceof InQuery){
             InQuery q = (InQuery) query;
             transInQuery(wrapper,q);
+        }else if (query instanceof NullQuery){
+            NullQuery q = (NullQuery) query;
+            transNullQuery(wrapper,q);
         }
         return wrapper;
     }
 
 
 
-    public static AbstractWrapper transEqualQuery(AbstractWrapper wrapper, EqualQuery query){
-        wrapper.eq(query.getField(), query.getValue());
-        return wrapper;
-    }
-
-    public static AbstractWrapper transLikeQuery(AbstractWrapper wrapper, LikeQuery query){
-        if (query.isLeft() && query.isRight()){
-            wrapper.like(query.getField(), query.getLikeValue());
-        }else if (query.isLeft()){
-            wrapper.likeLeft(query.getField(), query.getLikeValue());
+    private static AbstractWrapper transEqualQuery(AbstractWrapper wrapper, EqualQuery query){
+        if (query.isOpposition()){
+            wrapper.ne(query.getField(), query.getValue());
         }else {
-            wrapper.likeRight(query.getField(), query.getLikeValue());
+            wrapper.eq(query.getField(), query.getValue());
         }
+        return wrapper;
+    }
+
+    private static AbstractWrapper transLikeQuery(AbstractWrapper wrapper, LikeQuery query){
+        if (query.isOpposition()){
+            if (query.isLeft() && query.isRight()){
+                wrapper.notLike(query.getField(), query.getLikeValue());
+            }else if (query.isLeft()){
+                wrapper.notLikeLeft(query.getField(), query.getLikeValue());
+            }else {
+                wrapper.notLikeRight(query.getField(), query.getLikeValue());
+            }
+        }else {
+            if (query.isLeft() && query.isRight()){
+                wrapper.like(query.getField(), query.getLikeValue());
+            }else if (query.isLeft()){
+                wrapper.likeLeft(query.getField(), query.getLikeValue());
+            }else {
+                wrapper.likeRight(query.getField(), query.getLikeValue());
+            }
+        }
+
 
         return wrapper;
     }
 
-    public static AbstractWrapper transRangeQuery(AbstractWrapper wrapper, RangeQuery query){
+    private static AbstractWrapper transRangeQuery(AbstractWrapper wrapper, RangeQuery query){
         if (StringUtils.isNotBlank(query.getMax())){
             if (query.isIncludeMax()){
                 wrapper.le(query.getField(), query.getMax());
@@ -117,19 +139,36 @@ public class QueryWrapperUtil {
         return wrapper;
     }
 
-    public static AbstractWrapper transInQuery(AbstractWrapper wrapper, InQuery query){
-        wrapper.in(query.getField(), query.getValues());
+    private static AbstractWrapper transInQuery(AbstractWrapper wrapper, InQuery query){
+        if (query.isOpposition()){
+            wrapper.notIn(query.getField(), query.getValues());
+        }else {
+            wrapper.in(query.getField(), query.getValues());
+        }
+
         return wrapper;
     }
 
-    public static AbstractWrapper setLimit(AbstractWrapper wrapper, Limit limit){
+    private static AbstractWrapper transNullQuery(AbstractWrapper wrapper, NullQuery query){
+        if (query.isOpposition()){
+            wrapper.isNotNull(query.getField());
+        }else {
+            wrapper.isNull(query.getField());
+        }
+
+        return wrapper;
+    }
+
+
+
+    private static AbstractWrapper setLimit(AbstractWrapper wrapper, Limit limit){
         if (limit != null){
             wrapper.last("limit " + limit.getOffset() + " , " + limit.getCount());
         }
         return wrapper;
     }
 
-    public static AbstractWrapper setOrderBy(AbstractWrapper wrapper, List<Order> orders){
+    private static AbstractWrapper setOrderBy(AbstractWrapper wrapper, List<Order> orders){
         if (CollectionUtils.isEmpty(orders)){
             return wrapper;
         }
@@ -159,13 +198,13 @@ public class QueryWrapperUtil {
                 .addOrder("test",QueryOrderEnum.ASC)
                 .addOrder("name",QueryOrderEnum.DESC)
                 .addBooleanQuery(
-                        QueryBuilder.newBuilder().addEqualQuery("test","121212").addInQuery("name",Arrays.asList("1212","12131")),QueryOperatorEnum.OR)
+                        QueryBuilder.newBuilder().addEqualQuery("test","1111111").addInQuery("name",Arrays.asList("1111","1111")),QueryOperatorEnum.OR)
                 .addBooleanQuery(
-                        QueryBuilder.newBuilder().addEqualQuery("test","121212").addInQuery("name",Arrays.asList("1212","12131")),QueryOperatorEnum.AND)
+                        QueryBuilder.newBuilder().addEqualQuery("test","222222").addInQuery("name",Arrays.asList("22222","2222")),QueryOperatorEnum.AND)
                 .addBooleanQuery(
-                        QueryBuilder.newBuilder().addEqualQuery("test","121212").addInQuery("name",Arrays.asList("1212","12131"))
-                                .addBooleanQuery(QueryBuilder.newBuilder().addEqualQuery("createTime","121212").addInQuery("name",Arrays.asList("1212","12131")),QueryOperatorEnum.OR)
-                                .addBooleanQuery(QueryBuilder.newBuilder().addEqualQuery("createTime","121212").addInQuery("name",Arrays.asList("1212","12131")),QueryOperatorEnum.AND)
+                        QueryBuilder.newBuilder().addEqualQuery("test","33333").addInQuery("name",Arrays.asList("3333","33333"))
+                                .addBooleanQuery(QueryBuilder.newBuilder().addEqualQuery("createTime","444444").addInQuery("name",Arrays.asList("44444","44444")),QueryOperatorEnum.OR)
+                                .addBooleanQuery(QueryBuilder.newBuilder().addEqualQuery("createTime","55555").addInQuery("name",Arrays.asList("55555","5555")),QueryOperatorEnum.AND)
                         ,QueryOperatorEnum.OR)
                 .getQueryParam();
         System.out.println(JSONUtil.toJsonStr(queryParam));

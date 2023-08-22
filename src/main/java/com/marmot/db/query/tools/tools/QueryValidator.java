@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @Author:zhaozhou
  * @Date: 2023/07/18
- * @Desc:
+ * @Desc: 将各种类型的查询参数是否正确
  */
 public class QueryValidator {
     public static <T extends AbstractBaseQuery>  String validQuery(T query){
@@ -56,7 +56,7 @@ public class QueryValidator {
             if (CollectionUtils.isEmpty(q.getQueries())){
                 return "BooleanQuery, [queries] is empty";
             }
-            String errMsg = validQueries(q.getBaseQueries());
+            String errMsg = validQueries(q.getQueries());
             return errMsg;
         } else {
             return "Unknown query, str=" + JSONUtil.toJsonStr(query);
