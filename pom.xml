@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.marmot</groupId>
     <artifactId>db-query-tools</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
     <name>db-query-tools</name>
     <description>db-query-tools</description>
 
