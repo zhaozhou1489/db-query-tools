@@ -34,6 +34,43 @@ public class UserController {
     private UserService userService;
 
 
+    /**
+     {
+     "queries": ["{\"likeValue\":\"11\",\"left\":true,\"right\":true,\"opposition\":false,\"field\":\"name\",\"type\":\"like\"}", "{\"max\":\"1000\",\"min\":\"1\",\"includeMax\":true,\"includeMin\":false,\"field\":\"code\",\"type\":\"range\"}", "{\"values\":[\"1\",\"2\",\"3\"],\"opposition\":false,\"field\":\"id\",\"type\":\"in\"}"],
+     "limit": {
+     "offset": 0,
+     "count": 100
+     },
+     "orders": [{
+     "field": "id",
+     "order": 0,
+     "sortStr": "ASC"
+     }, {
+     "field": "name",
+     "order": 1,
+     "sortStr": "DESC"
+     }]
+     }
+
+
+
+     {
+     "queries": ["{\"likeValue\":\"11\",\"left\":true,\"right\":true,\"opposition\":false,\"field\":\"name\",\"type\":\"like\"}"],
+     "limit": {
+     "offset": 0,
+     "count": 100
+     },
+     "orders": [{
+     "field": "id",
+     "order": 0,
+     "sortStr": "ASC"
+     }, {
+     "field": "name",
+     "order": 1,
+     "sortStr": "DESC"
+     }]
+     }
+     **/
     @RequestMapping("/find")
     public ResponseResult findUser(@RequestBody QueryParam qp){
         QueryCond cond = new QueryCond();
